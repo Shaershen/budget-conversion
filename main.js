@@ -1,33 +1,3 @@
-// const categories = [
-//   'food',
-//   'household chemicals',
-//   'alcohol',
-//   'restaurants',
-//   'health',
-//   'childs',
-//   'rent',
-//   'credits',
-//   'clothes',
-//   'oil',
-//   'entertainment',
-//   'tel and internet',
-//   'others',
-// ]
-
-// // categories.forEach((item, index) => {
-// //   let category = document.createElement('tr')
-// //   category.innerHTML = `<td></td>`
-// //   document.querySelector(
-// //     '.categories'
-// //   ).innerHTML = `<tr><td>${item}</td><td>20</td></tr>`
-// //   console.log(item)
-// // })
-
-// let category = document.querySelector('.categories')
-// categories.forEach(
-//   (el) => (category.innerHTML += '<tr><td>' + el + '</td><td>20</td></tr>')
-// )
-
 class BudgetTracker {
   constructor(querySelectorString) {
     this.root = document.querySelector(querySelectorString)
@@ -177,6 +147,7 @@ class BudgetTracker {
     this.save()
   }
 }
+
 class AverageCost {
   constructor(querySelectorString) {
     this.root = document.querySelector(querySelectorString)
@@ -185,6 +156,10 @@ class AverageCost {
     this.root.querySelector('.new-entry').addEventListener('click', () => {
       this.onNewEntry()
     })
+    // 1. повесить один листенер на все инпуты bubbling events in js
+    // 2. сделать наследование как на 155 строке для бюджат трекера
+    //  - сделал, но пришлось использовать два дива в хтмл
+    // 3. сделать согласно ооп
 
     // load initial data from local storage
     this.load()
@@ -195,7 +170,7 @@ class AverageCost {
     <table class="average-cost">
       <thead>
         <tr>
-          <th>Sum</th>
+          <th>Sum USD</th>
           <th>Cost in rub</th>
           <th>Conversion cost</th>
           <th>Comments</th>
@@ -226,7 +201,7 @@ class AverageCost {
     return `
       <tr>
         <td>
-          <input type="number" placeholder="add a sum" class="input input-usd">
+          <input type="number" placeholder="add a usd" class="input input-usd">
         </td>
         <td>
           <input type="number" placeholder="sum in rub" class="input input-rub">
@@ -255,29 +230,38 @@ class AverageCost {
 
     this.updateSummary()
   }
-
+  //   ? складываем все rub, делим на все usd
   updateSummary() {
-    // const total = this.getEntryRows().reduce((total, row) => {
-    //   const amount = row.querySelector('.input-amount').value
-    //   const isExpense = row.querySelector('.input-type').value === 'expense'
-    //   const modifier = isExpense ? -1 : 1
-    //   return total + amount * modifier
-    // }, 0)
-    // const totalFormatted = new Intl.NumberFormat('ru-RU', {
-    //   style: 'currency',
-    //   currency: 'RUB',
-    //   minimumFractionDigits: 0,
-    // }).format(total)
-    // this.root.querySelector('.total').textContent = totalFormatted
+    const usdArr = []
+    const rubArr = []
+    const total = this.getEntryRows().reduce((total, row) => {
+      const usd = parseFloat(row.querySelector('.input-usd').value)
+      usdArr.push(usd)
+      const totalUsd = usdArr.reduce((acc, sum) => acc + sum, 0)
+
+      const rub = parseFloat(row.querySelector('.input-rub').value)
+      rubArr.push(rub)
+      const totalRub = rubArr.reduce((acc, sum) => acc + sum, 0)
+
+      return totalRub / totalUsd
+    }, 0)
+
+    const totalFormatted = new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: 'RUB',
+      minimumFractionDigits: 0,
+    }).format(total)
+
+    this.root.querySelector('.total').textContent = totalFormatted
   }
 
   save() {
     const data = this.getEntryRows().map((row) => {
       return {
-        sum: row.querySelector('.input-usd').value,
-        rub: row.querySelector('.input-rub').value,
-        cost: row.querySelector('.input-cost').value,
-        comments: parseFloat(row.querySelector('.input-comments').value),
+        sum: parseFloat(row.querySelector('.input-usd').value),
+        rub: parseFloat(row.querySelector('.input-rub').value),
+        cost: parseFloat(row.querySelector('.input-cost').value),
+        comments: row.querySelector('.input-comments').value,
       }
     })
     localStorage.setItem('average-cost-entries', JSON.stringify(data))
@@ -291,12 +275,12 @@ class AverageCost {
 
     const row = this.root.querySelector('.entries tr:last-of-type')
 
-    row.querySelector('.input-usd').value = entry.amount || 0
+    row.querySelector('.input-usd').value = entry.sum
 
-    row.querySelector('.input-rub').value = entry.amount || 0
-
-    row.querySelector('.input-cost').value = entry.amount || 0
-    row.querySelector('.input-amount').value = entry.amount || 0
+    row.querySelector('.input-rub').value = entry.rub
+    // ? conversion cost считается после ф5
+    row.querySelector('.input-cost').value = entry.rub / entry.sum || 0
+    row.querySelector('.input-comments').value = entry.comments || 0
     row.querySelector('.delete-entry').addEventListener('click', (e) => {
       this.onDelete(e)
     })
@@ -320,6 +304,6 @@ class AverageCost {
   }
 }
 
-new BudgetTracker('.app')
+new BudgetTracker('.budget')
 
-new AverageCost('.app')
+new AverageCost('.average')
