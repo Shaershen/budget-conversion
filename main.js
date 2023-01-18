@@ -6,9 +6,14 @@ class BudgetTracker {
     this.root.querySelector('.new-entry').addEventListener('click', () => {
       this.onNewEntry()
     })
+    this.load()
+
+    document.addEventListener('change', (e) => {
+      console.log(e.target)
+      this.save()
+    })
 
     // load initial data from local storage
-    this.load()
   }
 
   static html() {
@@ -163,6 +168,13 @@ class AverageCost {
 
     // load initial data from local storage
     this.load()
+
+    // this.root.querySelector('.entries').addEventListener('change', function () {
+    //   this.save()
+    // })
+    document.addEventListener('change', (e) => {
+      this.save()
+    })
   }
 
   static html() {
@@ -230,7 +242,7 @@ class AverageCost {
 
     this.updateSummary()
   }
-  //   ? складываем все rub, делим на все usd
+  //    складываем все rub, делим на все usd
   updateSummary() {
     const usdArr = []
     const rubArr = []
@@ -278,16 +290,17 @@ class AverageCost {
     row.querySelector('.input-usd').value = entry.sum
 
     row.querySelector('.input-rub').value = entry.rub
-    // ? conversion cost считается после ф5
+    //  conversion cost считается после ф5?
     row.querySelector('.input-cost').value = entry.rub / entry.sum || 0
-    row.querySelector('.input-comments').value = entry.comments || 0
+    row.querySelector('.input-comments').value = entry.comments || ' '
+    // переделать на 1 листенер
     row.querySelector('.delete-entry').addEventListener('click', (e) => {
       this.onDelete(e)
     })
 
-    row.querySelectorAll('.input').forEach((input) => {
-      input.addEventListener('change', () => this.save())
-    })
+    // row.querySelectorAll('.input').forEach((input) => {
+    //   input.addEventListener('change', () => this.save())
+    // })
   }
 
   getEntryRows() {
